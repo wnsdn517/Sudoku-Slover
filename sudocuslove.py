@@ -1,21 +1,48 @@
 # pip install customtkinter
 import customtkinter as tk
-from tkinter import messagebox, filedialog, Entry
+from hPyT import *
+from CTkMenuBar import *
+from CTkMessagebox import *
+from tkinter import filedialog, Entry,Menu
 import time
 import os
-import re
-
 class Sudoku:
     def __init__(self, master):
         self.master = master
-        self.master.title("9x9 Sudoku Solver")
+        self.master.title("∀⨃Ͳʘ SUDOKU SOLVER")
+        self.master.iconbitmap("SUDOKU.ico")
+        self.master.resizable(False, False)
+        maximize_minimize_button.hide(master)
+        self.master.protocol("WM_DELETE_WINDOW",self.exitQ)
+        self.mainframe = tk.CTkFrame(self.master)
+        self.mainframe.pack(side = "left",pady=10,padx=(10,5))
         self.board = [[None for _ in range(9)] for _ in range(9)]
         self.current_cell = (0, 0)
         self.start_time = None
         self.elapsed_time = 0
         self.solved = 0
-        self.board_frame = tk.CTkFrame(self.master)
+        self.board_frame = tk.CTkFrame(self.mainframe)
         self.board_frame.pack(padx=10, pady=10)
+        self.menu = Menu(self.master)
+        self.master.configure(menu=self.menu)
+        filemenu= Menu(self.menu,tearoff=0)
+        self.menu.add_cascade(label="file",menu=filemenu)
+        filemenu.add_command(label="Open",command=self.open_puzzle)
+        filemenu.add_command(label="Save",command=self.save_result)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit",foreground="red",command=self.exitQ)
+        helpmenu= Menu(self.menu,tearoff=0)
+        self.menu.add_cascade(label="help",menu=helpmenu)
+        helpmenu.add_command(label="Version",command="")
+        self.subframe = tk.CTkFrame(self.master)
+        self.subframe.pack(padx=(5,10),pady=10, side="right",fill="both")
+        self.labelframe = tk.CTkFrame(self.subframe)
+        self.labelframe.pack(padx = 5, fill="both")
+        self.historylabel = tk.CTkLabel(self.labelframe,text="History",font=('Helvetica', 20))
+        self.historylabel.pack()
+        self.history_frame = tk.CTkScrollableFrame(self.subframe)
+        self.history_frame.pack(padx=(5,10),pady=10, side="right",fill="both")
+
         for i in range(9):
             for j in range(9):
                 padx = 1
@@ -32,37 +59,31 @@ class Sudoku:
                 entry.bind('<Right>', self.move_right)
                 entry.bind('<Return>', self.move_next)
                 entry.bind('<Key>', self.limit_input_length)
-                entry.bind('<BackSpace>', self.clear_entry)
                 entry.bind('<Button-1>', self.select_cell)
                 self.board[i][j] = entry
 
-        self.btnframe = tk.CTkFrame(self.master)
-        self.btnframe.pack()
+        self.btnframe = tk.CTkFrame(self.mainframe)
+        self.btnframe.pack(fill="x")
         self.solve_button = tk.CTkButton(self.btnframe, text="Solve", font=('Helvetica', 16), command=self.solve_puzzle)
-        self.solve_button.pack(padx=(0, 10), side="left")
+        self.solve_button.pack(padx=(5, 10), side="left", fill="x", expand=True)
 
-        self.reset_button = tk.CTkButton(self.btnframe, text="Clear All", font=('Helvetica', 16), command=self.reset_puzzle)
-        self.reset_button.pack(side="right")
+        self.clear_button = tk.CTkButton(self.btnframe, text="Clear All", font=('Helvetica', 16), command=lambda: self.reset_puzzle(1,0))
+        self.clear_button.pack(padx=(0,5),pady=5,side="right", fill="x", expand=True)
 
-        self.time_label = tk.CTkLabel(self.master, text="Elapse: 0s", font=('Helvetica', 16))
+        self.time_label = tk.CTkLabel(self.mainframe, text="Elapse: 0s", font=('Helvetica', 16))
         self.time_label.pack(pady=10)
-
+    def exitQ(self):
+        result = CTkMessagebox(title="Exit?", message="Would you like to close the window?",icon="warning", option_1="Exit", option_2="Cancel")
+        if result.get() == "Exit":
+            exit()
     def limit_input_length(self, event):
         entry = event.widget
         char = event.char
-        if char == '\x08':
-            entry.delete(len(entry.get()) - 1)
-            return "break"
-        if not re.match(r'^\d$', char):
-            return "break"
-        if len(entry.get()) >= 1:
-            return "break"
-        if char == "0":
-            return "break"
 
-    def clear_entry(self, event):
-        entry = event.widget
-        entry.delete(0, tk.END)
+        if char == '\x08':
+            event.widget.delete(0, tk.END)
+        elif not char.isdigit() or len(entry.get()) >= 1 or char == "0":
+            return "break"
 
     def solve_puzzle(self):
         self.start_time = time.time()
@@ -83,36 +104,56 @@ class Sudoku:
     def show_solution(self, puzzle):
         self.solved = 1
         self.highlight_3x3_area()
-        for i in range(9):
-            for j in range(9):
-                self.board[i][j].delete(0, tk.END)
-                self.board[i][j].insert(0, str(puzzle[i][j]))
-                self.board[i][j].configure(font=('Helvetica', 20))
+
+        for i, row_entries in enumerate(self.board):
+            for j, entry in enumerate(row_entries):
+                entry.delete(0, tk.END)
+                entry.insert(0, str(puzzle[i][j]))
+                entry.configure(font=('Helvetica', 20))
+
         self.elapsed_time = round(time.time() - self.start_time, 2)
         self.time_label.configure(text=f"Elapse: {self.elapsed_time}s")
-        self.solve_button.configure(text="Save", command=lambda: self.save_result(puzzle))
-        self.reset_button.configure(text="Reset")
+        self.solve_button.configure(text="Save", command=self.save_result)
+        self.clear_button.destroy()
+        self.reset_button = tk.CTkOptionMenu(self.btnframe, values=["Unlock", "Clear", "Reset"], command=self.resetMenu)
+        self.reset_button.pack(padx=(0,5),side="right", fill="x", expand=True)
 
+    def resetMenu(self,values):
+        if values == "Unlock":
+            self.reset_puzzle(2,1)
+        elif values == "Clear":
+            self.reset_puzzle(1,1)
+        elif values == "Reset":
+            self.reset_puzzle(3,1)
     def show_unsolvable_message(self):
-        messagebox.showwarning("Warning", "Unsolvable puzzle.")
+        CTkMessagebox(title="Warning", message="Unsolvable puzzle",icon="warning", option_1="OK")
         self.reset_button.configure(state=tk.NORMAL)
 
         for i in range(9):
             for j in range(9):
                 self.board[i][j].configure(state='normal')
 
-    def reset_puzzle(self):
+    def reset_puzzle(self,mod,re):
         self.start_time = None
         self.elapsed_time = 0
         self.solved = 0
         self.time_label.configure(text="Elapse: 0s")
         self.solve_button.configure(text="Solve", command=self.solve_puzzle)
-        self.reset_button.configure(text="Clear All")
+        if re == 1:
+            self.reset_button.destroy()
+            self.clear_button = tk.CTkButton(self.btnframe, text="Clear All", font=('Helvetica', 16), command=lambda: self.reset_puzzle(1,0))
+            self.clear_button.pack(padx=(0,5),side="right", fill="x", expand=True)
+
         for i in range(9):
             for j in range(9):
-                self.board[i][j].delete(0, tk.END)
-                self.board[i][j].configure(state='normal', font=('Helvetica', 20))
-                self.board[i][j].delete(0, tk.END)
+                entry = self.board[i][j]
+                if mod == 1:
+                    entry.delete(0, tk.END)
+                entry.configure(state='normal', font=('Helvetica', 20))
+                if mod == 3:
+                    entry.delete(0, tk.END)
+
+
 
     def solve_sudoku(self, puzzle):
         empty_cell = self.find_empty_cell(puzzle)
@@ -123,49 +164,47 @@ class Sudoku:
         for num in range(1, 10):
             if self.is_valid_move(puzzle, row, col, num):
                 puzzle[row][col] = num
+
                 if self.solve_sudoku(puzzle):
                     return True
-                puzzle[row][col] = 0
+
+                puzzle[row][col] = 0  # Backtrack if the current placement is not valid
 
         return False
-
     def find_empty_cell(self, puzzle):
-        for i in range(9):
-            for j in range(9):
-                if puzzle[i][j] == 0:
-                    return (i, j)
-        return None
+        return next(((i, j) for i in range(9) for j in range(9) if puzzle[i][j] == 0), None)
 
     def is_valid_move(self, puzzle, row, col, num):
-        return self.is_valid_row(puzzle, row, num) and self.is_valid_column(puzzle, col, num) and self.is_valid_box(
-            puzzle, row, col, num)
+        return (
+            self.is_valid_row(puzzle, row, num) and
+            self.is_valid_column(puzzle, col, num) and
+            self.is_valid_box(puzzle, row, col, num)
+        )
 
     def is_valid_row(self, puzzle, row, num):
         return num not in puzzle[row]
 
     def is_valid_column(self, puzzle, col, num):
-        for i in range(9):
-            if puzzle[i][col] == num:
-                return False
-        return True
+        return num not in [puzzle[i][col] for i in range(9)]
 
     def is_valid_box(self, puzzle, row, col, num):
-        start_row = row - row % 3
-        start_col = col - col % 3
-        for i in range(3):
-            for j in range(3):
-                if puzzle[start_row + i][start_col + j] == num:
-                    return False
-        return True
+        start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+
+        return num not in [
+            puzzle[start_row + i][start_col + j]
+            for i in range(3)
+            for j in range(3)
+        ]
 
     def select_cell(self, event):
         entry = event.widget
-        for i in range(9):
-            for j in range(9):
-                if self.board[i][j] == entry:
+        for i, row_entries in enumerate(self.board):
+            for j, board_entry in enumerate(row_entries):
+                if board_entry == entry:
                     self.current_cell = (i, j)
                     self.update_cell_focus()
                     self.highlight_3x3_area()
+
 
     def update_cell_focus(self):
         row, col = self.current_cell
@@ -180,6 +219,7 @@ class Sudoku:
     def highlight_3x3_area(self):
         self.clear_highlight()
         row, col = self.current_cell
+
         for i in range(9):
             for j in range(9):
                 if i // 3 == row // 3 and j // 3 == col // 3 or i // 1 == row // 1 or j // 1 == col // 1:
@@ -217,18 +257,49 @@ class Sudoku:
     def move_next(self, event):
         row, col = self.current_cell
         self.move(event, row_change=1, col_change=-col) if col == 8 else self.move(event, col_change=1)
+    def open_puzzle(self):
+        file_path = filedialog.askopenfilename(defaultextension=".txt", filetypes=[("text file", "*.txt")], title="Open File")
+        if file_path:
+            with open(file_path, 'r') as file:
+                lines = file.readlines()
 
-    def save_result(self, puzzle):
+            # 간단한 형식 확인
+            if not self.is_valid_file_format(lines):
+                CTkMessagebox(title="Error", message="Invalid file format.", icon="error", option_1="OK")
+                return
+
+            for i, line in enumerate(lines):
+                values = line.strip().split()
+                for j, value in enumerate(values):
+                    if value.isdigit():
+                        self.board[i][j].delete(0, tk.END)
+                        self.board[i][j].insert(0, value)
+
+    def is_valid_file_format(self, lines):
+        # 예상 형식: 9개의 줄, 각 줄에 9개의 숫자 또는 공백
+        if len(lines) != 9:
+            return False
+        for line in lines:
+            values = line.strip().split()
+            if len(values) != 9 or any(not value.isdigit() and value != ' ' for value in values):
+                return False
+        return True
+    def save_result(self):
+        if not self.solved:
+            result = CTkMessagebox(title="Save Confirmation", message="The puzzle is not solved yet. Do you still want to save?",icon="question", option_1="Save", option_2="Cancel")
+            if result.get() == 'Cancel':
+                return
         file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("text file", "*.txt")], title="Save As..")
         if file_path:
-            if os.path.exists(file_path):
-                overwrite = messagebox.askyesno("Warning", "File already exists. Overwrite?")
-                if not overwrite:
-                    return
             with open(file_path, 'w') as file:
-                for row in puzzle:
-                    file.write(' '.join(map(str, row)) + '\n')
+                for row_entries in self.board:
+                    values = [entry.get() if entry.get() else ' ' for entry in row_entries]
+                    file.write(' '.join(map(str, values)) + '\n')
+            re = CTkMessagebox(title="Information", message="Sudoku puzzle saved successfully.", option_1="OK",option_2="Open")
+            if re.get() == "Open":
+                os.system(f"start notepad.exe \"{file_path}\"")
 
 root = tk.CTk()
 game = Sudoku(root)
 root.mainloop()
+
