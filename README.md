@@ -1,4 +1,4 @@
-# ∀⨃Ͳʘ Sudoku Solver
+# A∐Ͳʘ Sudoku Solver
 > <span style="color:#80FF00">영통중 1-2 12번 </span>
 
 ### 📢How to use this program💡
@@ -13,12 +13,12 @@
 |---|
 
 <details>
-<summary>v1.0.3 Release soon!</summary>
+<summary>v1.1.2 Release soon!</summary>
 
 > <span style="color:#FFB26E"> Scheduled to be released on December 01, 23
 </span>
 
-* [x] __program name change__ sudoku solver -> ∀⨃Ͳʘ Sudoku Solver
+* [x] __program name change__ sudoku solver -> A∐Ͳʘ Sudoku Solver
 * [x] __add load function__
 * [ ] __add history function__
 * [x] __add menu__
