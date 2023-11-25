@@ -17,6 +17,7 @@
 
 > <span style="color:#FFB26E"> Scheduled to be released on December 01, 23
 </span>
+
 * __program name change__ sudoku solver -> ∀⨃Ͳʘ Sudoku Solver
 * __add load function__
 * __add history function__
