@@ -15,7 +15,7 @@
 <details>
 <summary>v1.1.2 Release soon!</summary>
 
-> <span style="color:#FFB26E"> Scheduled to be released on December 01, 23
+> <span style="color:#FFB26E"> Scheduled to be released on December 04, 23
 </span>
 
 * [x] __program name change__ sudoku solver -> A∐Ͳʘ Sudoku Solver
